@@ -24,6 +24,7 @@ int disassemble8080Op(unsigned char *codebuffer, int pc) {
         case 0x0d: printf("DCR      C"); break;
         case 0x0e: printf("MVI      C, #%02x", code[1]); opbytes=2; break;
         case 0x0f: printf("RRC"); break;
+
         case 0x10: printf("-"); break;
         case 0x11: printf("LXI      D, #%02x%02x", code[2], code[1]); opbytes=3; break;
         case 0x12: printf("STAX     D"); break;
@@ -40,6 +41,7 @@ int disassemble8080Op(unsigned char *codebuffer, int pc) {
         case 0x1d: printf("DCR      E"); break;
         case 0x1e: printf("MVI      E, #%02x", code[1]); opbytes=2; break;
         case 0x1f: printf("RAR"); break;
+
         case 0x20: printf("-"); break;
         case 0x21: printf("LXI      H, #%02x%02x", code[2], code[1]); opbytes=3; break;
         case 0x22: printf("SHLD     $%02x%02x", code[2], code[1]); opbytes=3; break;
@@ -56,6 +58,7 @@ int disassemble8080Op(unsigned char *codebuffer, int pc) {
         case 0x2d: printf("DCR      L"); break;
         case 0x2e: printf("MVI      L, #%02x", code[1]); opbytes=2; break;
         case 0x2f: printf("CMA"); break;
+        
         case 0x30: printf("-"); break;
         case 0x31: printf("LXI      SP, #%02x%02x", code[2], code[1]); opbytes=3; break;
         case 0x32: printf("STA      $%02x%02x", code[2], code[1]); opbytes=3; break;
