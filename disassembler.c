@@ -175,27 +175,25 @@ int disassemble8080Op(unsigned char *codebuffer, int pc) {
 }
 
 int main(int argc, char **argv) {
-    FILE *f = fopen(argv[1], "rb");
-    if (f == NULL) {
-        printf("error: Could not open file\n");
+    FILE *fp = fopen(argv[1], "rb");
+    if (argc < 2) {
+        puts("Error: no file specified");
         exit(1);
-    } else if (argc == 1) {
-        printf("error: No file specified\n");
+    } else if (fp == NULL) {
+        puts("Error: unable to open file");
+        exit(1);
     }
 
-    //get file size and set memory buffer
-    fseek(f, 0L, SEEK_END);
-    int fsize = ftell(f);
-    fseek(f, 0L, SEEK_SET);
+    fseek(fp, 0L, SEEK_END);
+    int fsize = ftell(fp);
+    fseek(fp, 0L, SEEK_SET);
 
     unsigned char *buffer = malloc(fsize);
-    fread(buffer, fsize, 1, f);
-    fclose(f);
-    
-    int pc = 0;
-    while (pc < fsize) {
-        pc += disassemble8080Op(buffer, pc);
-    }
+    fread(buffer, 1, fsize, fp);
+    fclose(fp);
+
+    int pc;
+    for (pc = 0; pc < fsize; pc += disassemble8080Op(buffer, pc));
 
     return 0;
 }
