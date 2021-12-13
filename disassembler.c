@@ -168,6 +168,55 @@ int disassemble8080Op(unsigned char *codebuffer, int pc) {
         case 0x94: printf("SUB      H"); break;
         case 0x95: printf("SUB      L"); break;
         case 0x96: printf("SUB      M"); break;
+        case 0x97: printf("SUB      A"); break;
+        case 0x98: printf("SBB      B"); break;
+        case 0x99: printf("SBB      C"); break;
+        case 0x9a: printf("SBB      D"); break;
+        case 0x9b: printf("SBB      E"); break;
+        case 0x9c: printf("SBB      H"); break;
+        case 0x9d: printf("SBB      L"); break;
+        case 0x9e: printf("SBB      M"); break;
+        case 0x9f: printf("SBB      A"); break;
+
+        case 0xa0: printf("ANA      B"); break;
+        case 0xa1: printf("ANA      C"); break;
+        case 0xa2: printf("ANA      D"); break;
+        case 0xa3: printf("ANA      E"); break;
+        case 0xa4: printf("ANA      H"); break;
+        case 0xa5: printf("ANA      L"); break;
+        case 0xa6: printf("ANA      M"); break;
+        case 0xa7: printf("ANA      A"); break;
+        case 0xa8: printf("XRA      B"); break;
+        case 0xa9: printf("XRA      C"); break;
+        case 0xaa: printf("XRA      D"); break;
+        case 0xab: printf("XRA      E"); break;
+        case 0xac: printf("XRA      H"); break;
+        case 0xad: printf("XRA      L"); break;
+        case 0xae: printf("XRA      M"); break;
+        case 0xaf: printf("XRA      A"); break;
+        
+        case 0xb0: printf("ORA      B"); break;
+        case 0xb1: printf("ORA      C"); break;
+        case 0xb2: printf("ORA      D"); break;
+        case 0xb3: printf("ORA      E"); break;
+        case 0xb4: printf("ORA      H"); break;
+        case 0xb5: printf("ORA      L"); break;
+        case 0xb6: printf("ORA      M"); break;
+        case 0xb7: printf("ORA      A"); break;
+        case 0xb8: printf("CMP      B"); break;
+        case 0xb9: printf("CMP      C"); break;
+        case 0xba: printf("CMP      D"); break;
+        case 0xbb: printf("CMP      E"); break;
+        case 0xbc: printf("CMP      H"); break;
+        case 0xbd: printf("CMP      L"); break;
+        case 0xbe: printf("CMP      M"); break;
+        case 0xbf: printf("CMP      A"); break;
+        
+        case 0xc0: printf("RNZ"); break;
+        case 0xc1: printf("POP      B"); break;
+        case 0xc2: printf("JNZ      $%02x%02x", code[2], code[1]); opbytes=3; break;
+        case 0xc3: printf("JMP      $%02x%02x", code[2], code[1]); opbytes=3; break;
+        case 0xc4: printf("CNZ      $%02x%02x", code[2], code[1]); opbytes=3; break;
     }
     putchar('\n');
 
