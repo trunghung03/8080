@@ -1,2 +1,2 @@
-disassembler: disassembler.c
-	$(CC) disassembler.c -o disassembler -Wall -Wextra -pedantic -std=c99
+emulator: emulator.c
+	$(CC) emulator.c -o emulator -Wall -Wextra -std=c99 -pedantic -O -g -Werror

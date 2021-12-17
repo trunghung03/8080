@@ -302,8 +302,9 @@ int main(int argc, char **argv) {
     fseek(fp, 0L, SEEK_SET);
 
     unsigned char *buffer = malloc(fsize);
-    fread(buffer, 1, fsize, fp);
-    fclose(fp);
+    if (!fread(buffer, 1, fsize, fp) && ferror(fp)) { //if fread() returns 0 and error happens
+        fputs("Error reading file", stderr);
+    } else fclose(fp);
 
     int pc;
     for (pc = 0; pc < fsize; pc += disassemble8080Op(buffer, pc));
