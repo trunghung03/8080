@@ -280,7 +280,7 @@ int disassemble8080Op(unsigned char *codebuffer, int pc) {
         case 0xfe: printf("CPI      #%02x", code[1]); opbytes=2; break;
         case 0xff: printf("RST      7"); break;
 
-        default: puts("Unknown instruction found, please report back to developer\n"); break;
+        default: puts("Unknown instruction found, please report back to developer.\n"); break;
     }
     putchar('\n');
 
