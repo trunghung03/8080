@@ -668,7 +668,7 @@ void Emulate8080Op(State8080* state) {
             state->pc++;
             break;
         }
-        case 0x1e: //MVI D, data
+        case 0x1e: //MVI E, data
         {
             state->e = opcode[1];
             state->pc++;
@@ -683,6 +683,12 @@ void Emulate8080Op(State8080* state) {
         case 0x2e: //MVI L, data
         {
             state->l = opcode[1];
+            state->pc++;
+            break;
+        }
+        case 0x3e: //MVI A, data
+        {
+            state->a = opcode[1];
             state->pc++;
             break;
         }
@@ -1989,6 +1995,16 @@ void Emulate8080Op(State8080* state) {
             state->cc.ac = 0;
             break;
         }
+        case 0xaf: //XRA A
+        {
+            state->a = state->a ^ state->a;
+            state->cc.z = (state->a == 0);
+            state->cc.s = ((state->a & 0x80) != 0);
+            state->cc.p = parity(state->a);
+            state->cc.cy = 0;
+            state->cc.ac = 0;
+            break;
+        }
         
         //XRA M
         case 0xae: 
@@ -2279,6 +2295,7 @@ void Emulate8080Op(State8080* state) {
             state->memory[state->sp-1] = state->a;
             state->memory[state->sp-2] = 0x0 & \
                 ( (state->cc.cy<<7) | (1<<6) | (state->cc.p<<5) | (state->cc.ac<<3) | (state->cc.z<<1) | state->cc.s ); //PSW
+            state->sp -= 2;
             break;
         }
 
