@@ -2,6 +2,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include "raylib.h"
+
+#define WINDOWS_WIDTH 256
+#define WINDOWS_HEIGHT 224
+#define SCALE 4
+#define VRAM 0x2400
 
 typedef struct ConditionCodes {
     uint8_t     z:1;
@@ -31,6 +37,9 @@ void UnimplementedInstruction(State8080* state);
 int disassemble8080Op(unsigned char *codebuffer, int pc);
 void Emulate8080Op(State8080* state);
 int parity(uint16_t n);
+void initEmulator(State8080* state, unsigned char *sourcefile);
+void render(State8080* state);
+unsigned char *readFile(int argc, char **filename);
 
 void UnimplementedInstruction(State8080* state) {
     printf("Error: Unimplemented Instruction: %02x", state->memory[state->pc]);
@@ -325,7 +334,6 @@ void Emulate8080Op(State8080* state) {
     unsigned char *opcode = &state->memory[state->pc];
     bool skipPcInc = false;
 
-    disassemble8080Op(state->memory, state->pc);
     switch(*opcode) {
         //Data Transfer Group
         //MOV r1, r2 (Generated with .py script included)
@@ -1235,6 +1243,14 @@ void Emulate8080Op(State8080* state) {
             state->cc.p = (parity(state->l));
             break;
         }
+        case 0x3c: //INR A
+        {
+            state->a++;
+            state->cc.z = ((state->a & 0xff) == 0);
+            state->cc.s = ((state->a & 0x80) != 0);
+            state->cc.p = (parity(state->a));
+            break;
+        }
         
         //INR M
         case 0x34:
@@ -1530,13 +1546,35 @@ void Emulate8080Op(State8080* state) {
 
         //CALL addr
         case 0xcd: 
+    #ifdef FOR_CPUDIAG    
+            if (5 ==  ((opcode[2] << 8) | opcode[1]))    
+            {    
+                if (state->c == 9)    
+                {    
+                    uint16_t offset = (state->d<<8) | (state->e);    
+                    unsigned char *str = &state->memory[offset+3];  //skip the prefix bytes    
+                    while (*str != '$')    
+                        printf("%c", *str++);    
+                    printf("\n");    
+                }    
+                else if (state->c == 2)    
+                {    
+                    //saw this in the inspected code, never saw it called    
+                    printf ("print char routine called\n");    
+                }    
+            }    
+            else if (0 ==  ((opcode[2] << 8) | opcode[1]))    
+            {    
+                exit(0);    
+            }    
+            else break;
+   #endif
         {
-            uint16_t ret = state->pc+3; //might be pc+2
+            uint16_t ret = state->pc+2; 
             state->memory[state->sp-1] = (ret>>8) & 0xff;
             state->memory[state->sp-2] = ret & 0xff;
             state->sp-=2;
             state->pc = (opcode[2]<<8) | opcode[1];
-            skipPcInc = true;
             skipPcInc = true;
             break;
         }
@@ -2400,14 +2438,22 @@ void Emulate8080Op(State8080* state) {
 
         default: UnimplementedInstruction(state);
     }
+    
+    /*disassemble8080Op(state->memory, state->pc);
     printf("\tC = %d, P = %d, S = %d, Z = %d\n", state->cc.cy, state->cc.p, state->cc.s, state->cc.z);
     printf("\tA %02x BC %02x%02x DE %02x%02x HL %02x%02x SP %04x\n",\
-    state->a, state->b, state->c, state->d, state->e, state->h, state->l, state->sp);
+    state->a, state->b, state->c, state->d, state->e, state->h, state->l, state->sp); */
+
     if (!skipPcInc) state->pc++;
 }
 
+/*void generateInterrupt(State8080* state, int interrupt_num) {
+    push(state, (state->pc & 0xff00) >> 8, state->pc & 0xff);
+    state->pc = interrupt_num * 8;
+}*/
+
 int parity(uint16_t n) {
-    printf("make sure to implement parity!!!, %d\n", n);
+    //printf("make sure to implement parity!!!, %d\n", n);
     return 0;
 }
 
@@ -2433,8 +2479,32 @@ void initEmulator(State8080* state, unsigned char *sourcefile) {
     state->int_enable = 0;
 }
 
-int main(int argc, char **argv) {
-    FILE *fp = fopen(argv[1], "rb");
+void render(State8080* state) {
+    //Video: 256(x)*224(y) => 1024 * 896
+    //Video RAM: $2400-$3fff
+    /*
+    Graphics is rendered at 4 times the size.
+    Read throught the video RAM and output via for loop.
+    */
+
+    int column, row, row_bit;
+    int Byte_Width = WINDOWS_WIDTH / 8;
+
+    for (column = 0; column < WINDOWS_HEIGHT; column++) {
+        for (row = 0; row < Byte_Width; row++) {
+            for (row_bit = 8; row_bit >= 0; row_bit--) {
+                if (state->memory[VRAM + (column * Byte_Width + row)] & (1<<row_bit)) {
+                    DrawRectangle((row * 8 + row_bit) * SCALE, column * SCALE, SCALE, SCALE, WHITE);
+                } else {
+                    DrawRectangle((row * 8 + row_bit) * SCALE, column * SCALE, SCALE, SCALE, BLACK);
+                }
+            }
+        }
+    }
+}
+
+unsigned char *readFile(int argc, char **filename) {
+    FILE *fp = fopen(filename[1], "rb");
     if (argc < 2) {
         puts("Error: no file specified");
         exit(1);
@@ -2446,16 +2516,58 @@ int main(int argc, char **argv) {
     fseek(fp, 0L, SEEK_END);
     int fsize = ftell(fp);
     fseek(fp, 0L, SEEK_SET);
+    //Go to end of file to get file size
 
     unsigned char *buffer = malloc(fsize);
     if (!fread(buffer, 1, fsize, fp) && ferror(fp)) { //if fread() returns 0 and error happens
         fputs("Error reading file", stderr);
     } else fclose(fp);
 
+    return buffer;
+}
+
+int main(int argc, char **argv) {
     State8080 cpu;
-    State8080 *cpuptr = &cpu;
-    initEmulator(cpuptr, buffer);
-    while (1) Emulate8080Op(cpuptr);
+    State8080 *state = &cpu;
+    unsigned char *buffer = readFile(argc, argv);
+    initEmulator(state, buffer);
+
+    InitWindow(WINDOWS_WIDTH*SCALE, WINDOWS_HEIGHT*SCALE, "8080 Emulator - Space Invaders");
+    SetTargetFPS(60);
+
+    while (!WindowShouldClose()) {
+        Emulate8080Op(state);
+        BeginDrawing();
+            ClearBackground(GREEN);
+            render(state);
+            DrawFPS(100, 100);
+        EndDrawing();
+    }
+
+    CloseWindow();
+
+    //Main loop
+    /*bool done = 0;
+    int lastInterrupt = 0;
+    while (!done) {
+        uint8_t *opcode = state->memory[state->pc];
+        switch (*opcode) {
+            case 0xdb: 
+            {
+                uint8_t port = opcode[1];
+                state->a = machineIN(state, port);
+                state->pc++;
+            }
+            case 0xd3: 
+            {
+                uint8_t port = opcode[1];
+                machineOUT(state, port);
+                state->pc++;
+            } 
+            default: Emulate8080Op(state);
+        }
+        Emulate8080Op(state);
+    }*/
 
     return 0;
 }
